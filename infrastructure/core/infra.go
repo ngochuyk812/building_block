@@ -11,7 +11,7 @@ import (
 
 type IInfra interface {
 	GetLogger() *zap.Logger
-	GetDatabase() *databases.IDatabase
+	GetDatabase() databases.IDatabase
 	InjectSQL(dbType databases.DatabaseType) error
 	InjectCache(connectString, pass string) error
 	GetCache() cache.ICache
@@ -38,8 +38,8 @@ func NewInfra(config *config.ConfigApp) IInfra {
 	}
 	return infra
 }
-func (infra *Infra) GetDatabase() *databases.IDatabase {
-	return infra.database
+func (infra *Infra) GetDatabase() databases.IDatabase {
+	return *infra.database
 }
 
 func (infra *Infra) InjectCache(connectString, pass string) error {
