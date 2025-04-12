@@ -18,6 +18,18 @@ const (
 	POSTGRES = "postgres"
 )
 
+type IDatabase interface {
+	GetWriteDB() *sql.DB
+	GetReadDB() *sql.DB
+}
+
+var _ IDatabase = (*Database)(nil)
+
+type Database struct {
+	writeDB *sql.DB
+	readDB  *sql.DB
+}
+
 func (s DatabaseType) String() string {
 	switch s {
 	case MYSQL:
@@ -29,15 +41,51 @@ func (s DatabaseType) String() string {
 	}
 
 }
+func NewDatabases(dbType DatabaseType, readDSN, writeDSN, dbName string, logger *zap.Logger) (IDatabase, error) {
+	rs := &Database{}
+	err := rs.InitDatabases(dbType, readDSN, writeDSN, dbName, logger)
+	if err != nil {
+		return nil, err
+	}
+	return rs, nil
+}
 
-func NewConnectSql(dbType DatabaseType, dbName, conenctString string, logger *zap.Logger) (db *sql.DB, err error) {
+func (a *Database) InitDatabases(dbType DatabaseType, readDSN, writeDSN, dbName string, logger *zap.Logger) error {
+	var err error
+
+	a.writeDB, err = newConnectSql(dbType, dbName, writeDSN, logger)
+	if err != nil {
+		return fmt.Errorf("failed to connect write DB: %w", err)
+	}
+
+	if err := runMigration(dbType.String(), dbName, a.writeDB, logger); err != nil {
+		return fmt.Errorf("migration failed: %w", err)
+	}
+	if readDSN != "" {
+		a.readDB, err = newConnectSql(dbType, dbName, readDSN, logger)
+		if err != nil {
+			return fmt.Errorf("failed to connect read DB: %w", err)
+		}
+	}
+
+	return nil
+}
+func (a *Database) GetWriteDB() *sql.DB {
+	return a.writeDB
+}
+func (a *Database) GetReadDB() *sql.DB {
+	if a.readDB == nil {
+		return a.writeDB
+	}
+	return a.readDB
+}
+func newConnectSql(dbType DatabaseType, dbName, conenctString string, logger *zap.Logger) (db *sql.DB, err error) {
 	logger.Info("Staring Connect SQL...")
-	db, err = sql.Open("mysql", "root:123321huy@tcp(localhost:3316)/auth-service?tls=false")
+	db, err = sql.Open(dbType.String(), conenctString)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Connect SQL error...%v", err))
 		return nil, err
 	}
-	defer db.Close()
 
 	db.SetMaxOpenConns(10)
 	db.SetMaxIdleConns(5)
@@ -48,7 +96,6 @@ func NewConnectSql(dbType DatabaseType, dbName, conenctString string, logger *za
 	}
 	logger.Info(fmt.Sprintf("Connect SQL successfull...%v", err))
 
-	err = runMigration(dbType.String(), dbName, db, logger)
 	return db, err
 }
 
