@@ -58,7 +58,7 @@ func (infra *Infra) InjectSQL(dbType databases.DatabaseType) error {
 	if infra.dbSql != nil {
 		return nil
 	}
-	database, err := databases.NewDatabases(dbType, infra.config.DbConnect, infra.config.DbConnect, infra.config.DbName, infra.logger)
+	database, err := databases.NewDatabases(dbType, infra.config.DbConnectRead, infra.config.DbConnect, infra.config.DbName, infra.logger)
 	if err != nil {
 		panic("Error connect sql: " + err.Error())
 	}
