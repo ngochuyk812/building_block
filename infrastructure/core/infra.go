@@ -1,8 +1,6 @@
 package infrastructurecore
 
 import (
-	"database/sql"
-
 	"github.com/ngochuyk812/building_block/infrastructure/cache"
 	"github.com/ngochuyk812/building_block/infrastructure/databases"
 	"github.com/ngochuyk812/building_block/pkg/config"
@@ -20,7 +18,6 @@ type IInfra interface {
 type Infra struct {
 	config   *config.ConfigApp
 	logger   *zap.Logger
-	dbSql    *sql.DB
 	cache    cache.ICache
 	database databases.IDatabase
 }
@@ -55,7 +52,7 @@ func (infra *Infra) InjectCache(connectString, pass string) error {
 }
 
 func (infra *Infra) InjectSQL(dbType databases.DatabaseType) error {
-	if infra.dbSql != nil {
+	if infra.database != nil {
 		return nil
 	}
 	database, err := databases.NewDatabases(dbType, infra.config.DbConnectRead, infra.config.DbConnect, infra.config.DbName, infra.logger)
@@ -63,7 +60,7 @@ func (infra *Infra) InjectSQL(dbType databases.DatabaseType) error {
 		panic("Error connect sql: " + err.Error())
 	}
 	infra.database = database
-	if infra.dbSql == nil {
+	if infra.database == nil {
 		panic("Error conenct sql")
 	}
 	return nil
