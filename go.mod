@@ -1,4 +1,4 @@
-module building_block
+module github.com/ngochuyk812/building_block
 
 go 1.24.1
 

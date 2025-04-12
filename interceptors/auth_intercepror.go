@@ -1,12 +1,13 @@
 package interceptors
 
 import (
-	"building_block/infrastructure/helpers"
-	auth_context "building_block/pkg/auth"
 	"context"
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/ngochuyk812/building_block/infrastructure/helpers"
+	auth_context "github.com/ngochuyk812/building_block/pkg/auth"
 
 	"connectrpc.com/connect"
 	"github.com/golang-jwt/jwt/v5"

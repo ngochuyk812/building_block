@@ -1,11 +1,11 @@
 package infrastructurecore
 
 import (
-	"building_block/infrastructure/cache"
-	"building_block/infrastructure/databases"
-	"building_block/pkg/config"
 	"database/sql"
 
+	"github.com/ngochuyk812/building_block/infrastructure/cache"
+	"github.com/ngochuyk812/building_block/infrastructure/databases"
+	"github.com/ngochuyk812/building_block/pkg/config"
 	"go.uber.org/zap"
 )
 
