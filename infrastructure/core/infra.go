@@ -22,7 +22,7 @@ type Infra struct {
 	logger   *zap.Logger
 	dbSql    *sql.DB
 	cache    cache.ICache
-	database *databases.IDatabase
+	database databases.IDatabase
 }
 
 var _ IInfra = (*Infra)(nil)
@@ -39,7 +39,7 @@ func NewInfra(config *config.ConfigApp) IInfra {
 	return infra
 }
 func (infra *Infra) GetDatabase() databases.IDatabase {
-	return *infra.database
+	return infra.database
 }
 
 func (infra *Infra) InjectCache(connectString, pass string) error {
@@ -62,7 +62,7 @@ func (infra *Infra) InjectSQL(dbType databases.DatabaseType) error {
 	if err != nil {
 		panic("Error connect sql: " + err.Error())
 	}
-	infra.database = &database
+	infra.database = database
 	if infra.dbSql == nil {
 		panic("Error conenct sql")
 	}
