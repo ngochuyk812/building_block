@@ -4,6 +4,7 @@ import (
 	"github.com/ngochuyk812/building_block/infrastructure/cache"
 	"github.com/ngochuyk812/building_block/infrastructure/databases"
 	"github.com/ngochuyk812/building_block/pkg/config"
+	"github.com/ngochuyk812/building_block/pkg/mediator"
 	"go.uber.org/zap"
 )
 
@@ -20,6 +21,7 @@ type Infra struct {
 	logger   *zap.Logger
 	cache    cache.ICache
 	database databases.IDatabase
+	mediator *mediator.Mediator
 }
 
 var _ IInfra = (*Infra)(nil)
@@ -30,8 +32,9 @@ func NewInfra(config *config.ConfigApp) IInfra {
 		panic("cannnot install logger: " + err.Error())
 	}
 	infra := &Infra{
-		config: config,
-		logger: logger,
+		config:   config,
+		logger:   logger,
+		mediator: mediator.NewMediator(),
 	}
 	return infra
 }
