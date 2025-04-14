@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	infrastructurecore "github.com/ngochuyk812/building_block/infrastructure/core"
 	"github.com/ngochuyk812/building_block/pkg/mediator"
 )
 
 type IHandler[RQ any, RES any] interface {
-	Handle(ctx context.Context, infra *infrastructurecore.IInfra, cmd RQ) (RES, error)
+	Handle(ctx context.Context, cmd RQ) (RES, error)
 }
 
 func RegisterHandler[RQ any, RES any](m *mediator.Mediator, cmd RQ, handler IHandler[RQ, RES]) {
@@ -17,7 +16,7 @@ func RegisterHandler[RQ any, RES any](m *mediator.Mediator, cmd RQ, handler IHan
 	m.AddHandler(key, handler)
 }
 
-func Send[C any, R any](m *mediator.Mediator, ctx context.Context, infra *infrastructurecore.IInfra, cmd C) (R, error) {
+func Send[C any, R any](m *mediator.Mediator, ctx context.Context, cmd C) (R, error) {
 	key := fmt.Sprintf("%T", cmd)
 
 	handler, ok := m.GetHandler(key)
@@ -32,5 +31,5 @@ func Send[C any, R any](m *mediator.Mediator, ctx context.Context, infra *infras
 		return zero, fmt.Errorf("handler type mismatch for type %T", cmd)
 	}
 
-	return h.Handle(ctx, infra, cmd)
+	return h.Handle(ctx, cmd)
 }
