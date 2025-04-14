@@ -15,6 +15,7 @@ type IInfra interface {
 	InjectCache(connectString, pass string) error
 	GetCache() cache.ICache
 	GetConfig() *config.ConfigApp
+	GetMediator() *mediator.Mediator
 }
 type Infra struct {
 	config   *config.ConfigApp
@@ -79,4 +80,8 @@ func (infra *Infra) GetCache() cache.ICache {
 
 func (infra *Infra) GetConfig() *config.ConfigApp {
 	return infra.config
+}
+
+func (infra *Infra) GetMediator() *mediator.Mediator {
+	return infra.mediator
 }
