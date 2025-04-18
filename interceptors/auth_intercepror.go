@@ -33,14 +33,25 @@ func NewAuthInterceptor(secret string, policies *map[string][]string) connect.Un
 				if err != nil || !token.Valid {
 					return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("unauthorized: invalid token"))
 				}
-				claims := token.Claims.(*auth_context.AuthContext)
+				claims, err := auth_context.VerifyJWT(tokenStr, secret)
+				if err == nil {
+					return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf(err.Error()))
+				}
+
 				userRoles := claims.Roles
 				valid := hasValidRole(userRoles, allowedRoles)
 
 				if valid == false {
 					return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf("unauthorized access"))
 				}
-				ctx = helpers.NewContext(ctx, helpers.AuthContextKey, claims)
+				ctx = helpers.NewContext(ctx, helpers.AuthContextKey, &auth_context.AuthContext{
+					IdSite:     claims.IdSite,
+					IdAuthUser: claims.IdAuthUser,
+					Roles:      claims.Roles,
+					UserName:   claims.UserName,
+					Email:      claims.Email,
+					UserIP:     req.Header().Get("X-Forwarded-For"),
+				})
 			}
 
 			response, errService := next(ctx, req)
