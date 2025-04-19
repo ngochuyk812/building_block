@@ -17,6 +17,7 @@ func NewAuthInterceptor(secret string, policies *map[string][]string) connect.Un
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (res connect.AnyResponse, err error) {
 			tokenStr := req.Header().Get("Authorization")
+			ctx = helpers.SetTokenContext(ctx, tokenStr)
 			path := req.Spec().Procedure
 			allowedRoles, _ := (*policies)[path]
 
@@ -35,7 +36,7 @@ func NewAuthInterceptor(secret string, policies *map[string][]string) connect.Un
 				}
 				claims, err := auth_context.VerifyJWT(tokenStr, secret)
 				if err == nil {
-					return nil, connect.NewError(connect.CodeUnauthenticated, fmt.Errorf(err.Error()))
+					return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("unauthorized: invalid token"))
 				}
 
 				userRoles := claims.Roles

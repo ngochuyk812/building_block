@@ -1,8 +1,12 @@
 package infrastructurecore
 
 import (
+	"strings"
+
 	"github.com/ngochuyk812/building_block/infrastructure/cache"
 	"github.com/ngochuyk812/building_block/infrastructure/databases"
+	"github.com/ngochuyk812/building_block/infrastructure/eventbus"
+	"github.com/ngochuyk812/building_block/infrastructure/eventbus/kafka"
 	"github.com/ngochuyk812/building_block/pkg/config"
 	"github.com/ngochuyk812/building_block/pkg/mediator"
 	"go.uber.org/zap"
@@ -13,9 +17,11 @@ type IInfra interface {
 	GetDatabase() databases.IDatabase
 	InjectSQL(dbType databases.DatabaseType) error
 	InjectCache(connectString, pass string) error
+	InjectEventbus(brokers, topic string) error
 	GetCache() cache.ICache
 	GetConfig() *config.ConfigApp
 	GetMediator() *mediator.Mediator
+	GetEventbus() eventbus.Producer
 }
 type Infra struct {
 	config   *config.ConfigApp
@@ -23,6 +29,7 @@ type Infra struct {
 	cache    cache.ICache
 	database databases.IDatabase
 	mediator *mediator.Mediator
+	eventbus eventbus.Producer
 }
 
 var _ IInfra = (*Infra)(nil)
@@ -41,6 +48,21 @@ func NewInfra(config *config.ConfigApp) IInfra {
 }
 func (infra *Infra) GetDatabase() databases.IDatabase {
 	return infra.database
+}
+func (infra *Infra) GetEventbus() eventbus.Producer {
+	return infra.eventbus
+}
+
+func (infra *Infra) InjectEventbus(brokers, topic string) error {
+	if infra.eventbus != nil {
+		return nil
+	}
+	eventbus, err := kafka.NewProceduer(strings.Split(brokers, ","), topic)
+	if err != nil {
+		panic("Cannot connect eventbus")
+	}
+	infra.eventbus = eventbus
+	return nil
 }
 
 func (infra *Infra) InjectCache(connectString, pass string) error {

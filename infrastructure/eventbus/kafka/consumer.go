@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -13,19 +12,29 @@ import (
 	"time"
 
 	"github.com/ngochuyk812/building_block/infrastructure/eventbus"
+	"github.com/ngochuyk812/building_block/infrastructure/helpers"
+	auth_context "github.com/ngochuyk812/building_block/pkg/auth"
 	"github.com/segmentio/kafka-go"
 )
 
 var _ eventbus.Consumer = (*kafkaConsumer)(nil)
 
-var (
-	kafkaBrokerUrl string
-	kafkaTopic     string
-)
-
 type kafkaConsumer struct {
-	reader  *kafka.Reader
-	handler map[string]eventbus.IntegrationEventHandler
+	reader   *kafka.Reader
+	handler  map[string]eventbus.IntegrationEventHandler
+	topic    string
+	brokers  string
+	group_id string
+}
+
+func NewConsumer(brokers, topic, group_id string) (eventbus.Consumer, error) {
+	instance := &kafkaConsumer{
+		handler:  make(map[string]eventbus.IntegrationEventHandler),
+		topic:    topic,
+		brokers:  brokers,
+		group_id: group_id,
+	}
+	return instance, nil
 }
 
 func (k *kafkaConsumer) RegisterHandler(handler eventbus.IntegrationEventHandler) (err error) {
@@ -35,31 +44,26 @@ func (k *kafkaConsumer) RegisterHandler(handler eventbus.IntegrationEventHandler
 	return nil
 }
 
-func (k *kafkaConsumer) Start() {
-	flag.StringVar(&kafkaBrokerUrl, "kafka-brokers", "localhost:19092,localhost:29092,localhost:39092", "Kafka brokers in comma separated value")
-	flag.StringVar(&kafkaTopic, "kafka-topic", "foo", "Kafka topic.")
-
-	flag.Parse()
-
+func (k *kafkaConsumer) Run() {
+	log.Printf("Connect kafka %s topic %s", k.brokers, k.topic)
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
-	brokers := strings.Split(kafkaBrokerUrl, ",")
-
 	config := kafka.ReaderConfig{
-		Brokers:         brokers,
-		Topic:           kafkaTopic,
+		Brokers:         strings.Split(k.brokers, ","),
+		Topic:           k.topic,
 		MinBytes:        10e3,
 		MaxBytes:        10e6,
 		MaxWait:         1 * time.Second,
 		ReadLagInterval: -1,
+		GroupID:         k.group_id,
 	}
 
 	reader := kafka.NewReader(config)
 	defer reader.Close()
 
 	for {
-		m, err := k.reader.ReadMessage(context.Background())
+		m, err := reader.ReadMessage(context.Background())
 		if err != nil {
 			continue
 		}
@@ -71,12 +75,32 @@ func (k *kafkaConsumer) Start() {
 			event := handler.NewEvent()
 			if err := json.Unmarshal(m.Value, event); err != nil {
 				log.Printf("unmarshal error for key %s: %v", key, err)
-				return
+				continue
 			}
 
-			if err := handler.Handle(event); err != nil {
+			ctx := context.Background()
+
+			ctx = AuthContextMiddleware(ctx, m)
+
+			if err := handler.Handle(ctx, event); err != nil {
 				log.Printf("handle error for key %s: %v", key, err)
+				continue
+			}
+			if err := reader.CommitMessages(context.Background(), m); err != nil {
+				log.Printf("commit error: %v", err)
 			}
 		}
 	}
+}
+
+func AuthContextMiddleware(ctx context.Context, msg kafka.Message) context.Context {
+	for _, header := range msg.Headers {
+		if header.Key == "AuthContext" {
+			var auth auth_context.AuthContext
+			if err := json.Unmarshal(header.Value, &auth); err == nil {
+				return helpers.NewContext(ctx, helpers.AuthContextKey, &auth)
+			}
+		}
+	}
+	return ctx
 }

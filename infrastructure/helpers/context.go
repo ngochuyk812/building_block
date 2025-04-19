@@ -9,12 +9,25 @@ import (
 type contextKey string
 
 const (
-	AuthContextKey contextKey = "auth_context"
+	AuthContextKey  contextKey = "auth_context"
+	TokenContextKey contextKey = "token_context"
 )
 
 func AuthContext(ctx context.Context) (*auth_context.AuthContext, bool) {
 	val, ok := ctx.Value(AuthContextKey).(*auth_context.AuthContext)
 	return val, ok
+}
+
+func TokenContext(ctx context.Context) string {
+	val, ok := ctx.Value(TokenContextKey).(string)
+	if !ok {
+		return ""
+	}
+	return val
+}
+
+func SetTokenContext(ctx context.Context, token string) context.Context {
+	return context.WithValue(ctx, TokenContextKey, token)
 }
 
 func FromContext(ctx context.Context, key contextKey) (*auth_context.AuthContext, bool) {

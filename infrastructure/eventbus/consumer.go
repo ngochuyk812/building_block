@@ -1,10 +1,15 @@
 package eventbus
 
+import (
+	"context"
+)
+
 type IntegrationEventHandler interface {
 	NewEvent() IntegrationEvent
-	Handle(event IntegrationEvent) error
+	Handle(ctx context.Context, event IntegrationEvent) error
 }
 
 type Consumer interface {
 	RegisterHandler(handler IntegrationEventHandler) (err error)
+	Run()
 }
