@@ -30,7 +30,7 @@ func VerifyJWT(tokenStr string, serect string) (*ClaimModel, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
 		}
-		return serect, nil
+		return []byte(serect), nil
 	})
 
 	if err != nil {
