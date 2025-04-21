@@ -10,7 +10,6 @@ import (
 	auth_context "github.com/ngochuyk812/building_block/pkg/auth"
 
 	"connectrpc.com/connect"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 func NewAuthInterceptor(secret string, policies *map[string][]string) connect.UnaryInterceptorFunc {
@@ -29,13 +28,6 @@ func NewAuthInterceptor(secret string, policies *map[string][]string) connect.Un
 			}
 			if tokenStr != "" {
 				tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
-				token, err := jwt.ParseWithClaims(tokenStr, &auth_context.AuthContext{}, func(token *jwt.Token) (interface{}, error) {
-					return []byte(secret), nil
-				})
-
-				if err != nil || !token.Valid {
-					return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("unauthorized: invalid token"))
-				}
 				claims, err := auth_context.VerifyJWT(tokenStr, secret)
 				if err == nil {
 					return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("unauthorized: invalid token"))
