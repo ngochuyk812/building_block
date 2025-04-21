@@ -20,13 +20,9 @@ func NewAuthInterceptor(secret string, policies *map[string][]string) connect.Un
 			ctx = helpers.SetTokenContext(ctx, tokenStr)
 			path := req.Spec().Procedure
 			allowedRoles, _ := (*policies)[path]
-
-			if req.Header().Get("SiteKey") != "" {
-				ctx = helpers.NewContext(ctx, helpers.AuthContextKey, &auth_context.AuthContext{
-					IdSite: req.Header().Get("SiteKey"),
-				})
-			}
-
+			ctx = helpers.NewContext(ctx, helpers.AuthContextKey, &auth_context.AuthContext{
+				IdSite: req.Header().Get("SiteKey"),
+			})
 			if len(allowedRoles) > 0 && tokenStr == "" {
 				return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("unauthorized: missing token"))
 
