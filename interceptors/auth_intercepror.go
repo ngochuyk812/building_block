@@ -56,6 +56,9 @@ func NewAuthInterceptor(secret string, policies *map[string][]string) connect.Un
 }
 
 func hasValidRole(userRoles, allowedRoles []string) bool {
+	if len(allowedRoles) == 0 {
+		return true
+	}
 	for _, ur := range userRoles {
 		for _, ar := range allowedRoles {
 			if ur == ar {
