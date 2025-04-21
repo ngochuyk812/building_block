@@ -29,7 +29,7 @@ func NewAuthInterceptor(secret string, policies *map[string][]string) connect.Un
 			if tokenStr != "" {
 				tokenStr = strings.TrimPrefix(tokenStr, "Bearer ")
 				claims, err := auth_context.VerifyJWT(tokenStr, secret)
-				if err == nil {
+				if err != nil {
 					return nil, connect.NewError(connect.CodeUnauthenticated, errors.New("unauthorized: invalid token"))
 				}
 
