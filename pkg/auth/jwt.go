@@ -22,7 +22,7 @@ func GenerateJWT(claims *ClaimModel, serect string, expireIn time.Duration) (str
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(serect)
+	return token.SignedString([]byte(serect))
 }
 
 func VerifyJWT(tokenStr string, serect string) (*ClaimModel, error) {
