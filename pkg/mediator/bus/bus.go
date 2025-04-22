@@ -31,13 +31,12 @@ func Send[C any, R any](m *mediator.Mediator, ctx context.Context, cmd C) (res R
 	defer func() {
 		duration := time.Since(start).Milliseconds()
 		log.Printf(
-			"[%s] siteId=%s username=%s request=%+v duration=%dms res=%+v err=%+v",
+			"[%s] siteId=%s username=%s request=%+v duration=%dms err=%+v",
 			key,
 			authContext.IdSite,
 			authContext.UserName,
 			cmd,
 			duration,
-			res,
 			err,
 		)
 	}()
