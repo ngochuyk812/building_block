@@ -4,31 +4,24 @@ import (
 	"strings"
 
 	"github.com/ngochuyk812/building_block/infrastructure/cache"
-	"github.com/ngochuyk812/building_block/infrastructure/databases"
 	"github.com/ngochuyk812/building_block/infrastructure/eventbus"
 	"github.com/ngochuyk812/building_block/infrastructure/eventbus/kafka"
 	"github.com/ngochuyk812/building_block/pkg/config"
-	"github.com/ngochuyk812/building_block/pkg/mediator"
 	"go.uber.org/zap"
 )
 
 type IInfra interface {
 	GetLogger() *zap.Logger
-	GetDatabase() databases.IDatabase
-	InjectSQL(dbType databases.DatabaseType) error
 	InjectCache(connectString, pass string) error
 	InjectEventbus(brokers, topic string) error
 	GetCache() cache.ICache
 	GetConfig() *config.ConfigApp
-	GetMediator() *mediator.Mediator
 	GetEventbus() eventbus.Producer
 }
 type Infra struct {
 	config   *config.ConfigApp
 	logger   *zap.Logger
 	cache    cache.ICache
-	database databases.IDatabase
-	mediator *mediator.Mediator
 	eventbus eventbus.Producer
 }
 
@@ -40,15 +33,12 @@ func NewInfra(config *config.ConfigApp) IInfra {
 		panic("cannnot install logger: " + err.Error())
 	}
 	infra := &Infra{
-		config:   config,
-		logger:   logger,
-		mediator: mediator.NewMediator(),
+		config: config,
+		logger: logger,
 	}
 	return infra
 }
-func (infra *Infra) GetDatabase() databases.IDatabase {
-	return infra.database
-}
+
 func (infra *Infra) GetEventbus() eventbus.Producer {
 	return infra.eventbus
 }
@@ -77,21 +67,6 @@ func (infra *Infra) InjectCache(connectString, pass string) error {
 	return nil
 }
 
-func (infra *Infra) InjectSQL(dbType databases.DatabaseType) error {
-	if infra.database != nil {
-		return nil
-	}
-	database, err := databases.NewDatabases(dbType, infra.config.DbConnectRead, infra.config.DbConnect, infra.config.DbName, infra.logger)
-	if err != nil {
-		panic("Error connect sql: " + err.Error())
-	}
-	infra.database = database
-	if infra.database == nil {
-		panic("Error conenct sql")
-	}
-	return nil
-}
-
 func (infra *Infra) GetLogger() *zap.Logger {
 	return infra.logger
 }
@@ -102,8 +77,4 @@ func (infra *Infra) GetCache() cache.ICache {
 
 func (infra *Infra) GetConfig() *config.ConfigApp {
 	return infra.config
-}
-
-func (infra *Infra) GetMediator() *mediator.Mediator {
-	return infra.mediator
 }

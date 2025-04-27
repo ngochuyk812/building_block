@@ -13,9 +13,12 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
+	github.com/goccy/go-reflect v1.2.0 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
 	github.com/lib/pq v1.10.9 // indirect
+	github.com/mehdihadeli/go-mediatr v1.3.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.16 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 )
 
 require (
