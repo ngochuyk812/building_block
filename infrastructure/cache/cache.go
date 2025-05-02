@@ -7,6 +7,7 @@ import (
 
 type ICache interface {
 	Get(ctx context.Context, key string, scan interface{}) error
+	TTL(ctx context.Context, key string) (*time.Duration, error)
 	Set(ctx context.Context, key string, value interface{}, expired time.Duration) error
 	Del(ctx context.Context, key string) error
 	Gets(ctx context.Context, keys []string, scan map[string]interface{}) error
