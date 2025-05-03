@@ -10,28 +10,11 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-type RedisCache struct {
+type redisCache struct {
 	redis *redis.Client
 }
 
-var _ ICache = (*RedisCache)(nil)
-
-func NewRedisCache(connectString, pass string) (ICache, error) {
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     connectString,
-		Password: pass,
-		DB:       0,
-	})
-	fmt.Println("Inject Redis...")
-	_, err := rdb.Ping(context.Background()).Result()
-	if err != nil {
-		return nil, fmt.Errorf("cannot connect to Redis: %v", err)
-	}
-	fmt.Println("Inject Redis susccessfull")
-	return &RedisCache{redis: rdb}, nil
-}
-
-func (c RedisCache) Get(ctx context.Context, key string, scan interface{}) error {
+func (c redisCache) Get(ctx context.Context, key string, scan interface{}) error {
 	data, err := c.redis.Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
@@ -42,7 +25,7 @@ func (c RedisCache) Get(ctx context.Context, key string, scan interface{}) error
 	return json.Unmarshal(data, scan)
 }
 
-func (c RedisCache) Set(ctx context.Context, key string, value interface{}, expired time.Duration) error {
+func (c redisCache) Set(ctx context.Context, key string, value interface{}, expired time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -50,11 +33,11 @@ func (c RedisCache) Set(ctx context.Context, key string, value interface{}, expi
 	return c.redis.Set(ctx, key, data, expired).Err()
 }
 
-func (c RedisCache) Del(ctx context.Context, key string) error {
+func (c redisCache) Del(ctx context.Context, key string) error {
 	return c.redis.Del(ctx, key).Err()
 }
 
-func (c RedisCache) Gets(ctx context.Context, keys []string, scan map[string]interface{}) error {
+func (c redisCache) Gets(ctx context.Context, keys []string, scan map[string]interface{}) error {
 	results, err := c.redis.MGet(ctx, keys...).Result()
 	if err != nil {
 		return err
@@ -76,11 +59,11 @@ func (c RedisCache) Gets(ctx context.Context, keys []string, scan map[string]int
 	return nil
 }
 
-func (c RedisCache) Dels(ctx context.Context, keys ...string) error {
+func (c redisCache) Dels(ctx context.Context, keys ...string) error {
 	return c.redis.Del(ctx, keys...).Err()
 }
 
-func (c RedisCache) Sets(ctx context.Context, data map[string]interface{}, expired time.Duration) error {
+func (c redisCache) Sets(ctx context.Context, data map[string]interface{}, expired time.Duration) error {
 	pipe := c.redis.Pipeline()
 	for k, v := range data {
 		val, err := json.Marshal(v)
@@ -93,6 +76,31 @@ func (c RedisCache) Sets(ctx context.Context, data map[string]interface{}, expir
 	return err
 }
 
-func (c RedisCache) WithPrefix(prefix ...string) (out string) {
+func (c redisCache) WithPrefix(prefix ...string) (out string) {
 	return strings.Join(prefix, ">")
+}
+
+func (c *redisCache) TTL(ctx context.Context, key string) (*time.Duration, error) {
+	ttl, err := c.redis.TTL(ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+	return &ttl, nil
+}
+
+var _ ICache = (*redisCache)(nil)
+
+func NewRedisCache(connectString, pass string) (ICache, error) {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     connectString,
+		Password: pass,
+		DB:       0,
+	})
+	fmt.Println("Inject Redis...")
+	_, err := rdb.Ping(context.Background()).Result()
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to Redis: %v", err)
+	}
+	fmt.Println("Inject Redis susccessfull")
+	return &redisCache{redis: rdb}, nil
 }
