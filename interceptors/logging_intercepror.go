@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/ngochuyk812/building_block/infrastructure/logger"
 	"go.uber.org/zap"
 )
 
-func NewLoggingInterceptor(logger *zap.Logger) connect.UnaryInterceptorFunc {
+func NewLoggingInterceptor() connect.UnaryInterceptorFunc {
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (res connect.AnyResponse, err error) {
 			start := time.Now()
