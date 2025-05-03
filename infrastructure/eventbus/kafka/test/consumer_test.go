@@ -8,7 +8,6 @@ import (
 	infrastructurecore "github.com/ngochuyk812/building_block/infrastructure/core"
 	"github.com/ngochuyk812/building_block/infrastructure/eventbus"
 	"github.com/ngochuyk812/building_block/infrastructure/eventbus/kafka"
-	"github.com/ngochuyk812/building_block/pkg/config"
 )
 
 func TestNewConsumer(t *testing.T) {
@@ -24,13 +23,7 @@ func TestNewConsumer(t *testing.T) {
 
 func NewEventSendMailHandler() eventbus.IntegrationEventHandler {
 	return &eventSendMailHandler{
-		infra: infrastructurecore.NewInfra(&config.ConfigApp{
-			Port:          "1234",
-			DbConnect:     "db:123",
-			DbConnectRead: "read:123",
-			RedisConnect:  "redis:123",
-			DbName:        "test",
-		}),
+		infra: infrastructurecore.NewInfra(),
 	}
 }
 
